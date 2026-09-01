@@ -1,0 +1,19 @@
+.{
+    .name = .ntx_lsp,
+    .version = "0.1.0",
+    .fingerprint = 0x99407aa651bc8c85,
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        .shared = .{
+            .url = "git+https://github.com/natyv-io/shared#6b0d7260571f2ffd5cd9b808689fda4a65601e72",
+            .hash = "natyv_shared-0.1.0-cp-g4OikBABDeqLqYw9xc1U69NaX9QKCfnJokTbNfVnV",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "LICENSE",
+        "README.md",
+    },
+}
