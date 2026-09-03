@@ -5,8 +5,8 @@
     .minimum_zig_version = "0.16.0",
     .dependencies = .{
         .shared = .{
-            .url = "git+https://github.com/natyv-io/shared#6b0d7260571f2ffd5cd9b808689fda4a65601e72",
-            .hash = "natyv_shared-0.1.0-cp-g4OikBABDeqLqYw9xc1U69NaX9QKCfnJokTbNfVnV",
+            .url = "git+https://github.com/natyv-io/shared#113b668ab988be9143abf5d810ba47d81e653e60",
+            .hash = "natyv_shared-0.1.0-cp-g4NiQBgDRs8LexCRvvQB8QQ3vZ0dZ4GDf_rHws3K9",
         },
     },
     .paths = .{

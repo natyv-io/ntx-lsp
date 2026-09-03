@@ -110,6 +110,41 @@ test "compute: an unclosed tag surfaces a real Expose/parse error with a real po
     try std.testing.expect(diag.message.len > 0);
 }
 
+const unterminated_raw_code_source =
+    \\package main
+    \\
+    \\import "natyv/sdk/widgets"
+    \\
+    \\expose Form
+    \\
+    \\func Form(parent widgets.Container) error {
+    \\    <Container>
+    \\        <% x := 1
+    \\    </Container>
+    \\}
+    \\
+;
+
+test "compute: an unterminated <%...%> raw-code block surfaces a real error at the '<%' itself, not the end of file" {
+    // Editor-support audit (2026-09-02, `~/.claude/plans/lexical-wishing-penguin.md`
+    // Phase B2): a raw-code-block error needs correct line/col attribution
+    // or an editor's diagnostic squiggle points at the wrong place --
+    // `Parser.parseRawCodeBlock`'s own `fail(start_line, start_col, ...)`
+    // call (seeded from the '<' of the opening '<%') is what this proves.
+    const diag = (try compute(std.testing.allocator, unterminated_raw_code_source)).?;
+    defer std.testing.allocator.free(diag.message);
+    // Line 9, col 9 (1-based) is the real "<%" in the source above --
+    // proves this is a raw-code-specific error (Parser.parseRawCodeBlock's
+    // own fail call), not Expose.findComposers' outer brace-matching
+    // (confirmed by hand: a source with an unbalanced Go '{' inside the
+    // raw-code block instead reports the *composer's own* opening brace as
+    // unterminated, a real but different error path this test isn't
+    // exercising).
+    try std.testing.expectEqual(@as(u32, 9), diag.line);
+    try std.testing.expectEqual(@as(u32, 9), diag.col);
+    try std.testing.expect(std.mem.indexOf(u8, diag.message, "'<%'") != null);
+}
+
 test "compute: fixing the same source clears the diagnostic" {
     const broken_diag = try compute(std.testing.allocator, broken_source);
     try std.testing.expect(broken_diag != null);

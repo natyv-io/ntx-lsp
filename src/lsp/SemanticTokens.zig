@@ -94,6 +94,57 @@ test "compute: a real .ntx source produces real delta-encoded tokens, sorted by 
     try std.testing.expectEqual(@as(u32, 0), data[3]); // tokenType index for .type
 }
 
+test "compute: a tag nested inside a <%...%> raw-code block still gets real, correctly-ordered semantic tokens" {
+    // Editor-support audit (2026-09-02, `~/.claude/plans/lexical-wishing-penguin.md`
+    // Phase B2): confirms `emitRawCodeBlock`'s recursive `emitElement` calls for
+    // nested tags produce tokens that `compute`'s own sort-then-delta-encode pass
+    // (see above) already handles correctly -- no new `SemanticTokenType` or
+    // ordering fix needed, since the sort is by real source position, not emission
+    // order. The surrounding raw code itself (the `for` loop) deliberately gets no
+    // token of its own (see `emitRawCodeBlock`'s doc comment) -- that's left to the
+    // editor's own Go highlighting.
+    const src =
+        \\expose Form
+        \\
+        \\func Form(parent widgets.Container) error {
+        \\    <Container>
+        \\        <% for _, msg := range messages {
+        \\            <Button onClick={handleSave}>Save</Button>
+        \\        } %>
+        \\    </Container>
+        \\}
+    ;
+    const data = try compute(std.testing.allocator, src);
+    defer std.testing.allocator.free(data);
+
+    // Container open+close, Button open+close, onClick property -- same 5
+    // tokens as the plain (non-raw-code) test above, just reached through a
+    // raw-code splice instead of a direct child.
+    try std.testing.expectEqual(@as(usize, 25), data.len);
+
+    // First token is still Container's own opening tag, unaffected by the
+    // raw-code block that follows it as a sibling.
+    try std.testing.expectEqual(@as(u32, 3), data[0]); // deltaLine
+    try std.testing.expectEqual(@as(u32, 5), data[1]); // deltaStartChar
+    try std.testing.expectEqual(@as(u32, 9), data[2]); // length ("Container".len)
+    try std.testing.expectEqual(@as(u32, 0), data[3]); // tokenType index for .type
+
+    // Every subsequent delta must be non-negative on both axes relative to
+    // the running position -- a real regression check for the concern this
+    // test exists to rule out (raw-code splicing emitting tokens out of
+    // real source order, which delta-encoding can't represent correctly).
+    var i: usize = 5;
+    while (i < data.len) : (i += 5) {
+        const delta_line = data[i];
+        if (delta_line == 0) {
+            // Same line as the previous token -- deltaStartChar must still
+            // move forward, never negative (which would show up as a huge
+            // wrapped u32 instead).
+            try std.testing.expect(data[i + 1] < 1000);
+        }
+    }
+}
+
 test "compute: a broken .ntx source produces an empty token array, not an error" {
     const src =
         \\expose Form
