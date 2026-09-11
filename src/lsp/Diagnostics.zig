@@ -53,6 +53,7 @@ pub fn compute(gpa: std.mem.Allocator, src: []const u8) !?Diagnostic {
         found.uses_start,
         found.uses_end,
         .{},
+        false, // recycle_enabled: no live project config in scope in the LSP -- diagnostics/hover/semantic-tokens don't need Part 2's codegen-automation output, just a clean transpile
     );
     if (result.err) |e| return .{ .line = e.line, .col = e.col, .message = try gpa.dupe(u8, e.message) };
 

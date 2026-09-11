@@ -37,7 +37,7 @@ pub fn compute(gpa: std.mem.Allocator, src: []const u8) ![]u32 {
     const found = try Expose.findComposers(arena, src);
     if (found.err != null) return &.{};
 
-    const result = try Codegen.generateGo(arena, "main", src, found.composers, &.{}, found.uses, found.uses_start, found.uses_end, .{});
+    const result = try Codegen.generateGo(arena, "main", src, found.composers, &.{}, found.uses, found.uses_start, found.uses_end, .{}, false);
     if (result.err != null) return &.{};
     const tokens = result.output.?.semantic_tokens;
 

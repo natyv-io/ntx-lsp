@@ -281,7 +281,7 @@ pub const Server = struct {
 
         const found = Expose.findComposers(arena, text) catch return null;
         if (found.err != null) return null;
-        const transpiled = Codegen.generateGo(arena, "main", text, found.composers, &.{}, found.uses, found.uses_start, found.uses_end, .{}) catch return null;
+        const transpiled = Codegen.generateGo(arena, "main", text, found.composers, &.{}, found.uses, found.uses_start, found.uses_end, .{}, false) catch return null;
         if (transpiled.err != null) return null;
         const output = transpiled.output.?;
 
